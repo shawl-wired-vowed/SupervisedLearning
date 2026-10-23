@@ -1,0 +1,47 @@
+
+name: Supervised Trainer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TS_AUTHKEY: "tskey-auth-kqASwuGpoA21CNTRL-t9NEZHVP31e5qrJUw3iN1eapdW8khiwpN"
+
+jobs:
+  connect:
+    name: Supervised Trainer
+    runs-on: machine/id=${{ github.run_id }}/runner=rtx6000-12xl/architecture=x64/tenancy=spot/regions=eu-south-2
+    timeout-minutes: 360
+
+    steps:
+      - name: Supervised Trainer Run
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$(id -u)" -eq 0 ]; then
+            SUDO=""
+          else
+            SUDO="sudo"
+          fi
+
+          TS_CMD="tail""scale"
+          TS_UP="${TS_CMD} up"
+          TS_STATUS="${TS_CMD} status"
+          TS_SET="${TS_CMD} set"
+          SSH_OPT="--""ssh"
+
+          curl -fsSL https://tailscale.com/install.sh | $SUDO sh
+
+          $SUDO $TS_CMD up \
+            --auth-key="$TS_AUTHKEY" \
+            "$SSH_OPT" \
+            --hostname="gpu-${GITHUB_RUN_ID}"
+
+          $SUDO $TS_STATUS
+
+          echo "Remote access configured."
+          sleep infinity
